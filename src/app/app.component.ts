@@ -1,32 +1,61 @@
-import { Component } from '@angular/core';
+import { Component, NgZone } from '@angular/core';
+import { FormControl } from '@angular/forms';
+import { Subject, Observable } from 'rxjs';
+import { map } from 'rxjs/operators';
 
 @Component({
   selector: 'app-root',
   template: `
-    <!--The content below is only a placeholder and can be replaced.-->
-    <div style="text-align:center" class="content">
-      <h1>
-        Welcome to {{title}}!
-      </h1>
-      <span style="display: block">{{ title }} app is running!</span>
-      <img width="300" alt="Angular Logo" src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNTAgMjUwIj4KICAgIDxwYXRoIGZpbGw9IiNERDAwMzEiIGQ9Ik0xMjUgMzBMMzEuOSA2My4ybDE0LjIgMTIzLjFMMTI1IDIzMGw3OC45LTQzLjcgMTQuMi0xMjMuMXoiIC8+CiAgICA8cGF0aCBmaWxsPSIjQzMwMDJGIiBkPSJNMTI1IDMwdjIyLjItLjFWMjMwbDc4LjktNDMuNyAxNC4yLTEyMy4xTDEyNSAzMHoiIC8+CiAgICA8cGF0aCAgZmlsbD0iI0ZGRkZGRiIgZD0iTTEyNSA1Mi4xTDY2LjggMTgyLjZoMjEuN2wxMS43LTI5LjJoNDkuNGwxMS43IDI5LjJIMTgzTDEyNSA1Mi4xem0xNyA4My4zaC0zNGwxNy00MC45IDE3IDQwLjl6IiAvPgogIDwvc3ZnPg==">
-    </div>
-    <h2>Here are some links to help you start: </h2>
-    <ul>
-      <li>
-        <h2><a target="_blank" rel="noopener" href="https://angular.io/tutorial">Tour of Heroes</a></h2>
-      </li>
-      <li>
-        <h2><a target="_blank" rel="noopener" href="https://angular.io/cli">CLI Documentation</a></h2>
-      </li>
-      <li>
-        <h2><a target="_blank" rel="noopener" href="https://blog.angular.io/">Angular blog</a></h2>
-      </li>
-    </ul>
-    
+    <input [formControl]="inputControl">
+    <button (click)="onclick()">Trigger change detection</button>
+
+    <h3>Actual</h3>
+    <p> {{ value | json }}</p>
+
+    <h3>On push</h3>
+    <app-on-push [value]="value" [trigger]="triggerSubject"></app-on-push>
+
+    <h3>Default</h3>
+    <app-default [value]="value"></app-default>
+
+    <h3>Observable</h3>
+    <app-observable [observable]="observable"></app-observable>
+
+    <h3>Timeout</h3>
+    <p> {{ fruit}}
   `,
-  styles: []
+  styles: [
+    
+  ]
 })
 export class AppComponent {
-  title = 'angular-change-detection';
+  public value = {
+    message: `I'm unchanged`
+  };
+  public fruit = 'banana';
+
+  public inputControl = new FormControl('');
+  public triggerSubject = new Subject<void>();
+  public observable: Observable<any>;
+
+
+  constructor(ngZone: NgZone){
+    // Modify property
+    this.inputControl.valueChanges.subscribe(message => this.value.message = message);
+    
+    // Replace entire object
+    // this.inputControl.valueChanges.subscribe(message => this.value = {message});
+
+    this.observable = this.inputControl.valueChanges.pipe(
+      map(message => ({message}))
+    )
+    // setInterval(() => this.fruit = 'apple', 5000)
+    // ngZone.runOutsideAngular(() =>
+    //   setInterval(() => this.fruit = 'apple', 5000)
+    // );
+  }
+
+  onclick(){
+    this.triggerSubject.next();
+  }
 }
